@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nubank - Simulador Financeiro</title>
+    <!-- Tailwind CSS para Estilização Moderna -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .nu-purple { background-color: #820ad1; }
+        .nu-purple-text { color: #820ad1; }
+        .nu-purple-hover:hover { background-color: #6a08ab; }
+        /* Esconder barra de rolagem mantendo funcionalidade */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex justify-center items-center min-h-screen transition-colors duration-300">
+
+    <!-- Container Principal Estilo Smartphone -->
+    <div id="app-container" class="w-full max-w-md h-[100vh] sm:h-[880px] sm:rounded-3xl sm:shadow-2xl bg-slate-900 flex flex-col relative overflow-hidden border border-slate-800">
+        
+        <!-- Faixa de Aviso Obrigatória de Simulação -->
+        <div class="bg-purple-950/80 text-purple-300 text-[10px] font-semibold text-center py-1 tracking-wider uppercase border-b border-purple-900/50 z-50 flex items-center justify-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> Simulador — Valores Fictícios / Sem Valor Legal
+        </div>
+
+        <!-- Header Superior Fixo -->
+        <header class="px-6 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-900/80 backdrop-blur z-40">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('conta')">
+                <div class="w-10 h-10 rounded-full nu-purple flex items-center justify-center text-white font-bold text-lg shadow-md" id="user-avatar-initial">
+                    L
+                </div>
+                <div>
+                    <h2 class="text-xs text-slate-400">Olá,</h2>
+                    <span class="font-semibold text-sm text-slate-200" id="header-username">Lucas Silva</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition" title="Alternar Tema">
+                    <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                </button>
+                <button onclick="toggleBalanceVisibility()" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition" title="Ocultar/Mostrar Saldo">
+                    <i id="eye-icon" class="fa-solid fa-eye text-sm"></i>
+                </button>
+                <button onclick="openModal('notifications-modal')" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition relative" title="Notificações">
+                    <i class="fa-regular fa-bell text-sm"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full"></span>
+                </button>
+                <button onclick="switchTab('admin')" class="w-9 h-9 rounded-full bg-purple-900/40 border border-purple-700/50 flex items-center justify-center text-purple-300 hover:bg-purple-900/60 transition" title="Painel Administrativo">
+                    <i class="fa-solid fa-gear text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Corpo Dinâmico (Abas) -->
+        <main class="flex-1 overflow-y-auto no-scrollbar pb-24 relative" id="main-content">
+            <!-- As telas serão injetadas via JavaScript aqui -->
+        </main>
+
+        <!-- Navegação Inferior (Mobile Dock) -->
+        <nav class="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-4 py-3 flex justify-around items-center z-40">
+            <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center gap-1 text-purple-400" data-tab="home">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px] font-medium">Início</span>
+            </button>
+            <button onclick="switchTab('pix')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200" data-tab="pix">
+                <i class="fa-solid fa-pix text-lg"></i>
+                <span class="text-[10px] font-medium">Pix</span>
+            </button>
+            <button onclick="switchTab('cards')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200" data-tab="cards">
+                <i class="fa-solid fa-credit-card text-lg"></i>
+                <span class="text-[10px] font-medium">Cartão</span>
+            </button>
+            <button onclick="switchTab('organization')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200" data-tab="organization">
+                <i class="fa-solid fa-chart-pie text-lg"></i>
+                <span class="text-[10px] font-medium">Planejar</span>
+            </button>
+            <button onclick="switchTab('admin')" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200" data-tab="admin">
+                <i class="fa-solid fa-shield-halved text-lg"></i>
+                <span class="text-[10px] font-medium">Admin</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modais Globais -->
+    <!-- Modal Notificações -->
+    <div id="notifications-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-slate-900 w-full max-w-md sm:rounded-2xl border border-slate-800 p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-bell text-purple-400"></i> Notificações Fictícias
+                </h3>
+                <button onclick="closeModal('notifications-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3" id="notifications-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de Feedback -->
+    <div id="toast" class="fixed top-12 left-1/2 -translate-x-1/2 bg-purple-600 text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium z-50 hidden transition-all duration-300">
+        Ação realizada com sucesso!
+    </div>
+
+    <!-- Script da Aplicação -->
+    <script>
+        // --- ESTADO GLOBAL DO SIMULADOR ---
+        let appState = {
+            user: {
+                name: "Lucas Silva",
+                email: "lucas.silva@email.com",
+                avatar: "L",
+                account: "12345-6",
+                agency: "0001",
+                balance: 5420.50,
+                hideBalance: false,
+                creditLimit: 8500.00,
+                creditAvailable: 6200.00,
+                currentInvoice: 2300.00,
+                nextInvoice: 1450.00,
+                cardBlocked: false
+            },
+            theme: 'dark',
+            currentTab: 'home',
+            transactions: [
+                { id: 1, type: 'in', title: 'Pix Recebido - Maria Souza', category: 'Pix', amount: 1500.00, date: '12/10/2026', time: '14:20' },
+                { id: 2, type: 'out', title: 'Supermercado Extra', category: 'Alimentação', amount: 350.40, date: '11/10/2026', time: '18:45' },
+                { id: 3, type: 'out', title: 'Pagamento de Fatura', category: 'Contas', amount: 1200.00, date: '10/10/2026', time: '09:10' },
+                { id: 4, type: 'in', title: 'Salário Fictício Empresa X', category: 'Entradas', amount: 4500.00, date: '05/10/2026', time: '08:00' }
+            ],
+            goals: [
+                { id: 1, name: 'Reserva de Emergência', target: 10000.00, current: 4500.00, date: '31/12/2026' },
+                { id: 2, name: 'Viagem de Férias', target: 5000.00, current: 2100.00, date: '15/07/2027' }
+            ],
+            investments: [
+                { id: 1, name: 'RDB Fictício 100% CDI', invested: 3000.00, yield: '+R$ 245,50', rate: '11.5% ao ano' },
+                { id: 2, name: 'Tesouro Simulado IPCA+', invested: 1500.00, yield: '+R$ 132,10', rate: 'IPCA + 6.2%' }
+            ],
+            notifications: [
+                { id: 1, title: 'Pix Recebido', desc: 'Você recebeu R$ 1.500,00 de Maria Souza.', time: 'Há 20 min', read: false },
+                { id: 2, title: 'Compra Aprovada', desc: 'Compra de R$ 350,40 no Supermercado Extra.', time: 'Ontem', read: true },
+                { id: 3, title: 'Fatura Fechada', desc: 'Sua fatura de R$ 2.300,00 está disponível.', time: 'Há 2 dias', read: true }
+            ],
+            adminLogs: [
+                { date: '12/10/2026 — 15:30', user: 'Lucas', op: 'Alteração de saldo fictício', oldVal: 'R$ 500,00', newVal: 'R$ 5.420,50', admin: 'Administrador Master' }
+            ],
+            usersList: [
+                { id: 1, name: 'Lucas Silva', balance: 5420.50, status: 'Ativo' },
+                { id: 2, name: 'Ana Beatriz', balance: 1250.00, status: 'Ativo' },
+                { id: 3, name: 'Carlos Eduardo', balance: 340.00, status: 'Bloqueado' }
+            ]
+        };
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = function() {
+            renderApp();
+            updateHeader();
+        };
+
+        function updateHeader() {
+            document.getElementById('header-username').innerText = appState.user.name;
+            document.getElementById('user-avatar-initial').innerText = appState.user.avatar;
+        }
+
+        function switchTab(tabName) {
+            appState.currentTab = tabName;
+            // Atualizar botões do dock
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.tab === tabName) {
+                    btn.classList.remove('text-slate-400');
+                    btn.classList.add('text-purple-400');
+                } else {
+                    btn.classList.add('text-slate-400');
+                    btn.classList.remove('text-purple-400');
+                }
+            });
+            renderApp();
+        }
+
+        function renderApp() {
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
+
+            switch(appState.currentTab) {
+                case 'home':
+                    container.innerHTML = renderHome();
+                    break;
+                case 'pix':
+                    container.innerHTML = renderPix();
+                    break;
+                case 'cards':
+                    container.innerHTML = renderCards();
+                    break;
+                case 'organization':
+                    container.innerHTML = renderOrganization();
+                    break;
+                case 'admin':
+                    container.innerHTML = renderAdmin();
+                    break;
+                case 'conta':
+                    container.innerHTML = renderConta();
+                    break;
+                case 'transfer':
+                    container.innerHTML = renderTransfer();
+                    break;
+                case 'payments':
+                    container.innerHTML = renderPayments();
+                    break;
+                case 'invoice':
+                    container.innerHTML = renderInvoice();
+                    break;
+                case 'statement':
+                    container.innerHTML = renderStatement();
+                    break;
+                case 'goals':
+                    container.innerHTML = renderGoals();
+                    break;
+                case 'investments':
+                    container.innerHTML = renderInvestments();
+                    break;
+                case 'loans':
+                    container.innerHTML = renderLoans();
+                    break;
+                case 'security':
+                    container.innerHTML = renderSecurity();
+                    break;
+                default:
+                    container.innerHTML = renderHome();
+            }
+        }
+
+        // --- RENDERIZADORES DE TELAS ---
+
+        function renderHome() {
+            const balanceText = appState.user.hideBalance ? '••••••' : `R$ ${appState.user.balance.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            return `
+                <div class="p-6 space-y-6 animate-fadeIn">
+                    <!-- Saldo da Conta -->
+                    <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-slate-400">Conta Nu (Simulação)</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-slate-600"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-slate-100 mb-4">${balanceText}</h1>
+                        
+                        <!-- Atalhos Rápidos -->
+                        <div class="grid grid-cols-5 gap-2 pt-2 border-t border-slate-800/80">
+                            <button onclick="switchTab('pix')" class="flex flex-col items-center gap-1 group">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-purple-900/40 flex items-center justify-center text-slate-200 group-hover:text-purple-300 transition">
+                                    <i class="fa-solid fa-pix text-sm"></i>
+                                </div>
+                                <span class="text-[11px] text-slate-300">Pix</span>
+                            </button>
+                            <button onclick="switchTab('transfer')" class="flex flex-col items-center gap-1 group">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-purple-900/40 flex items-center justify-center text-slate-200 group-hover:text-purple-300 transition">
+                                    <i class="fa-solid fa-arrow-right-arrow-left text-sm"></i>
+                                </div>
+                                <span class="text-[11px] text-slate-300">Transferir</span>
+                            </button>
+                            <button onclick="switchTab('payments')" class="flex flex-col items-center gap-1 group">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-purple-900/40 flex items-center justify-center text-slate-200 group-hover:text-purple-300 transition">
+                                    <i class="fa-solid fa-barcode text-sm"></i>
+                                </div>
+                                <span class="text-[11px] text-slate-300">Pagar</span>
+                            </button>
+                            <button onclick="switchTab('cards')" class="flex flex-col items-center gap-1 group">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-purple-900/40 flex items-center justify-center text-slate-200 group-hover:text-purple-300 transition">
+                                    <i class="fa-solid fa-credit-card text-sm"></i>
+                                </div>
+                                <span class="text-[11px] text-slate-300">Cartão</span>
+                            </button>
+                            <button onclick="switchTab('statement')" class="flex flex-col items-center gap-1 group">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-purple-900/40 flex items-center justify-center text-slate-200 group-hover:text-purple-300 transition">
+                                    <i class="fa-solid fa-file-lines text-sm"></i>
+                                </div>
+                                <span class="text-[11px] text-slate-300">Extrato</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cartão de Demonstração / Fatura -->
+                    <div onclick="switchTab('invoice')" class="bg-gradient-to-br from-slate-900 to-purple-950/40 border border-slate-800 p-5 rounded-2xl shadow-sm cursor-pointer hover:border-purple-800/50 transition">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-credit-card text-purple-400"></i>
+                                <span class="font-semibold text-sm text-slate-200">Cartão de Crédito (Demo)</span>
+                            </div>
+                            <span class="text-xs text-purple-400 font-medium">Fatura Atual</span>
+                        </div>
+                        <p class="text-xl font-bold text-slate-100 mb-1">R$ ${appState.user.currentInvoice.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                        <p class="text-xs text-slate-400">Limite disponível: R$ ${appState.user.creditAvailable.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                    </div>
+
+                    <!-- Mais Áreas / Atalhos Secundários -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="switchTab('goals')" class="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl cursor-pointer hover:border-slate-700 transition">
+                            <i class="fa-solid fa-bullseye text-purple-400 mb-2 text-lg"></i>
+                            <h3 class="font-semibold text-sm text-slate-200">Cofrinhos & Metas</h3>
+                            <p class="text-[11px] text-slate-400">Simule suas economias</p>
+                        </div>
+                        <div onclick="switchTab('investments')" class="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl cursor-pointer hover:border-slate-700 transition">
+                            <i class="fa-solid fa-chart-line text-purple-400 mb-2 text-lg"></i>
+                            <h3 class="font-semibold text-sm text-slate-200">Investimentos</h3>
+                            <p class="text-[11px] text-slate-400">Simulador de rendimento</p>
+                        </div>
+                        <div onclick="switchTab('loans')" class="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl cursor-pointer hover:border-slate-700 transition">
+                            <i class="fa-solid fa-hand-holding-dollar text-purple-400 mb-2 text-lg"></i>
+                            <h3 class="font-semibold text-sm text-slate-200">Empréstimo</h3>
+                            <p class="text-[11px] text-slate-400">Simule parcelas e juros</p>
+                        </div>
+                        <div onclick="switchTab('organization')" class="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl cursor-pointer hover:border-slate-700 transition">
+                            <i class="fa-solid fa-wallet text-purple-400 mb-2 text-lg"></i>
+                            <h3 class="font-semibold text-sm text-slate-200">Organização</h3>
+                            <p class="text-[11px] text-slate-400">Gráficos e categorias</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPix() {
+            return `
+                <div class="p-6 space-y-6 animate-fadeIn">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="switchTab('home')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                        <h2 class="text-lg font-bold text-slate-100">Área Pix (Simulador)</h2>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="simulatedPixAction('send')" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-left hover:border-purple-500 transition">
+                            <i class="fa-solid fa-arrow-up text-purple-400 mb-2 text-lg"></i>
+                            <div class="font-semibold text-sm text-slate-200">Enviar Pix</div>
+                            <div class="text-[11px] text-slate-400">Transferir valor fictício</div>
+                        </button>
+                        <button onclick="simulatedPixAction('receive')" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-left hover:border-purple-500 transition">
+                            <i class="fa-solid fa-arrow-down text-purple-400 mb-2 text-lg"></i>
+                            <div class="font-semibold text-sm text-slate-200">Receber Pix</div>
+                            <div class="text-[11px] text-slate-400">Simular entrada Pix</div>
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <h3 class="font-semibold text-sm text-slate-200">Chaves Pix Cadastradas (Demo)</h3>
+                        <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">CPF: ***.456.789-**</span>
+                            <button onclick="showToast('Chave copiada!')" class="text-purple-400 font-medium">Copiar</button>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">E-mail: ${appState.user.email}</span>
+                            <button onclick="showToast('Chave copiada!')" class="text-purple-400 font-medium">Copiar</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-center space-y-3">
+                        <h3 class="font-semibold text-sm text-slate-200">QR Code de Demonstração</h3>
+                        <div class="w-32 h-32 bg-slate-800 mx-auto flex items-center justify-center rounded-lg border border-slate-700">
+                            <i class="fa-solid fa-qrcode text-5xl text-purple-400"></i>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Escaneie para receber simulação</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCards() {
+            return `
+                <div class="p-6 space-y-6 animate-fadeIn">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="switchTab('home')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                        <h2 class="text-lg font-bold text-slate-100">Cartão Virtual (Demo)</h2>
+                    </div>
+
+                    <!-- Cartão Visual -->
+                    <div class="w-full h-48 bg-gradient-to-tr from-purple-900 via-purple-700 to-indigo-900 rounded-2xl p-5 flex flex-col justify-between shadow-lg relative overflow-hidden">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold tracking-widest text-white">nubank</span>
+                            <i class="fa-solid fa-wifi text-white/70"></i>
+                        </div>
+                        <div>
+                            <div class="text-[11px] text-purple-200 uppercase tracking-widest">Cartão Virtual Fictício</div>
+                            <div class="text-lg font-mono text-white tracking-widest mt-1">4532 •••• •••• 8891</div>
+                        </div>
+                        <div class="flex justify-between items-end text-xs text-purple-100">
+                            <div>
+                                <span class="text-[9px] block text-purple-300">TITULAR</span>
+                                <span class="font-semibold">${appState.user.name}</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] block text-purple-300">VALIDADE</span>
+                                <span>12/30</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] block text-purple-300">CVV</span>
+                                <span>884</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controles do Cartão -->
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold text-sm text-slate-200">Bloquear Cartão</h3>
+                                <p class="text-[11px] text-slate-400">Temporariamente bloqueado para segurança</p>
+                            </div>
+                            <input type="checkbox" ${appState.user.cardBlocked ? 'checked' : ''} onchange="toggleCardBlock()" class="w-5 h-5 accent-purple-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+                        <h3 class="font-semibold text-sm text-slate-200">Limites</h3>
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>Limite Total: R$ ${appState.user.creditLimit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                            <span>Disponível: R$ ${appState.user.creditAvailable.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-purple-600 h-full" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOrganization() {
+            return `
+                <div class="p-6 space-y-6 animate-fadeIn">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="switchTab('home')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                        <h2 class="text-lg font-bold text-slate-100">Organização Financeira</h2>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <h3 class="font-semibold text-sm text-slate-200">Resumo de Gastos por Categoria</h3>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="flex justify-between mb-1 text-slate-300"><span>Alimentação</span><span>R$ 350,40</span></div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-purple-500 h-full w-[40%]"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1 text-slate-300"><span>Contas & Boletos</span><span>R$ 1.200,00</span></div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-indigo-500 h-full w-[70%]"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1 text-slate-300"><span>Transporte</span><span>R$ 180,00</span></div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-pink-500 h-full w-[25%]"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAdmin() {
+            return `
+                <div class="p-6 space-y-6 animate-fadeIn">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="switchTab('home')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                        <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-purple-400"></i> ADMINISTRADOR — CONTROLE
+                        </h2>
+                    </div>
+
+                    <!-- Controle de Saldo Fictício -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-4">
+                        <h3 class="font-semibold text-sm text-purple-300">Controle de Saldo (Simulador)</h3>
+                        
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Selecionar Usuário:</label>
+                            <select id="admin-user-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+                                ${appState.usersList.map(u => `<option value="${u.id}">${u.name} (Atual: R$ ${u.balance.toFixed(2)})</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Valor da Operação Fictícia (R$):</label>
+                            <input type="number" id="admin-amount-input" placeholder="0.00" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 pt-2">
+                            <button onclick="adminModifyBalance('add')" class="bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-xs font-semibold transition">Adicionar</button>
+                            <button onclick="adminModifyBalance('remove')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg text-xs font-semibold transition">Remover</button>
+                            <button onclick="adminModifyBalance('set')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg text-xs font-semibold transition">Definir</button>
+                        </div>
+                        <p id="admin-feedback" class="text-[11px] text-green-400 font-medium hidden"></p>
+                    </div>
+
+                    <!-- Log Administrativo -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-3">
+                        <h3 class="font-semibold text-sm text-slate-200">Log Administrativo (Auditoria)</h3>
+                        <div class="space-y-2 text-xs" id="admin-logs-container">
+                            ${appState.adminLogs.map(log => `
+                                <div class="bg-slate-800/60 p-3 rounded-lg border border-slate-700/50 space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400">
+                                        <span>${log.date}</span>
+                                        <span>Admin: ${log.admin}</span>
+                                    </div>
+                                    <div class="font-medium text-slate-200">${log.op} — Usuário: ${log.user}</div>
+                                    <div class="text-[11px] text-purple-300">Anterior: ${log.oldVal} \vert{} Novo:${log.newVal}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Telas secundárias estáticas complementares
+        function renderConta() { return renderSimpleSubPage('Conta Nu', 'Dados da Conta: Agência 0001 | Conta 12345-6'); }
+        function renderTransfer() { return renderSimpleSubPage('Transferência Fictícia', 'Insira os dados da transferência simulada.'); }
+        function renderPayments() { return renderSimpleSubPage('Pagamentos e Boletos', 'Simule o pagamento de contas e boletos.'); }
+        function renderInvoice() { return renderSimpleSubPage('Fatura do Cartão', 'Fatura atual: R$ 2.300,00 | Vencimento 15/10'); }
+        function renderStatement() { return renderSimpleSubPage('Extrato Completo', 'Histórico de todas as movimentações fictícias.'); }
+        function renderGoals() { return renderSimpleSubPage('Cofrinhos & Metas', 'Acompanhe o progresso das suas metas de economia.'); }
+        function renderInvestments() { return renderSimpleSubPage('Investimentos Simulados', 'Acompanhe a rentabilidade teórica dos produtos.'); }
+        function renderLoans() { return renderSimpleSubPage('Simulador de Empréstimo', 'Simule valores, taxas e parcelas.'); }
+        function renderSecurity() { return renderSimpleSubPage('Segurança e Senha', 'Configurações de PIN, biometria e sessão.'); }
+
+        function renderSimpleSubPage(title, subtitle) {
+            return `
+                <div class="p-6 space-y-6 animate-fadeIn">
+                    <div class="flex items-center gap-3 mb-2">
+                        <button onclick="switchTab('home')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                        <h2 class="text-lg font-bold text-slate-100">${title}</h2>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl text-center space-y-3">
+                        <i class="fa-solid fa-layer-group text-3xl text-purple-400"></i>
+                        <p class="text-sm text-slate-300">${subtitle}</p>
+                        <button onclick="switchTab('home')" class="bg-purple-600 text-white px-4 py-2 rounded-xl text-xs font-semibold">Voltar ao Início</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- FUNÇÕES DE INTERAÇÃO E ADMIN ---
+
+        function toggleBalanceVisibility() {
+            appState.user.hideBalance = !appState.user.hideBalance;
+            renderApp();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if(html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                document.getElementById('theme-icon').className = "fa-solid fa-sun text-sm";
+            } else {
+                html.classList.add('dark');
+                document.getElementById('theme-icon').className = "fa-solid fa-moon text-sm";
+            }
+        }
+
+        function toggleCardBlock() {
+            appState.user.cardBlocked = !appState.user.cardBlocked;
+            showToast(appState.user.cardBlocked ? 'Cartão bloqueado com sucesso.' : 'Cartão desbloqueado.');
+        }
+
+        function simulatedPixAction(type) {
+            const amount = type === 'send' ? 150.00 : 500.00;
+            if(type === 'send' && appState.user.balance < amount) {
+                showToast('Saldo insuficiente para simulação!');
+                return;
+            }
+            const oldVal = appState.user.balance;
+            appState.user.balance = type === 'send' ? appState.user.balance - amount : appState.user.balance + amount;
+            
+            showToast(type === 'send' ? 'Pix enviado com sucesso! (Simulação)' : 'Pix recebido com sucesso! (Simulação)');
+            renderApp();
+        }
+
+        function adminModifyBalance(action) {
+            const inputVal = parseFloat(document.getElementById('admin-amount-input').value);
+            if(isNaN(inputVal) || inputVal <= 0) {
+                alert('Insira um valor válido.');
+                return;
+            }
+
+            const oldValFormatted = `R$ ${appState.user.balance.toFixed(2)}`;
+            if(action === 'add') appState.user.balance += inputVal;
+            else if(action === 'remove') appState.user.balance -= inputVal;
+            else if(action === 'set') appState.user.balance = inputVal;
+
+            const newValFormatted = `R$ ${appState.user.balance.toFixed(2)}`;
+
+            // Registrar Log
+            const now = new Date();
+            const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} — ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            appState.adminLogs.unshift({
+                date: dateStr,
+                user: appState.user.name,
+                op: 'Alteração de saldo fictício',
+                oldVal: oldValFormatted,
+                newVal: newValFormatted,
+                admin: 'Administrador Master'
+            });
+
+            const feedback = document.getElementById('admin-feedback');
+            feedback.innerText = "Saldo de demonstração atualizado.";
+            feedback.classList.remove('hidden');
+            setTimeout(() => feedback.classList.add('hidden'), 3000);
+            renderApp();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'notifications-modal') {
+                document.getElementById('notifications-list').innerHTML = appState.notifications.map(n => `
+                    <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700/50">
+                        <div class="flex justify-between items-center text-xs font-semibold text-slate-200">
+                            <span>${n.title}</span>
+                            <span class="text-[10px] text-slate-400">${n.time}</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-1">${n.desc}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
